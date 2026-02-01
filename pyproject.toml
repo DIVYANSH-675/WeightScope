@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "weightscope"
+version = "0.1.0"
+description = "Predict Transformer checkpoint quality from attention-weight invariants."
+readme = "README.md"
+requires-python = ">=3.10"
+license = {file = "LICENSE"}
+authors = [{name = "Divyansh Gupta"}]
+dependencies = ["torch>=2.2", "numpy>=1.24"]
+
+[project.urls]
+Repository = "https://github.com/DIVYANSH-675/WeightScope"
+Issues = "https://github.com/DIVYANSH-675/WeightScope/issues"
+
+[project.optional-dependencies]
+dev = ["pytest>=7", "build>=1", "ruff>=0.9"]
+
+[project.scripts]
+weightscope = "weightscope.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F", "I"]

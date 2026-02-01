@@ -1,0 +1,9 @@
+cff-version: 1.2.0
+message: "If you use this implementation, cite this software and the research paper linked in README.md."
+title: "WeightScope"
+version: 0.1.0
+authors:
+  - family-names: Gupta
+    given-names: Divyansh
+repository-code: "https://github.com/DIVYANSH-675/WeightScope"
+license: MIT

@@ -1,0 +1,7 @@
+{
+  "test_mae": 0.19492465257644653,
+  "test_training_mean_baseline_mae": 0.1061197817325592,
+  "train_count": 24,
+  "validation_count": 8,
+  "test_count": 8
+}
