@@ -72,3 +72,15 @@ def test_bank_contains_real_checkpoints_and_regressor_learns(tmp_path):
         loss.backward()
         optimizer.step()
     assert float((model(x) - y).square().mean().detach()) < initial
+
+
+def test_invalid_run_ids_cannot_silently_drop_rows():
+    import pytest
+
+    for ids in ([0, 1, 2, 3, 4, float("nan")], [0, 1, 2, 3, 4, float("inf")], [[0, 1, 2, 3, 4]]):
+        with pytest.raises(ValueError, match="run_ids"):
+            group_split(ids)
+    ids = np.array(["first", "second", "third", "fourth", "fifth", "first"])
+    partitions = group_split(ids)
+    assert sorted(np.concatenate(partitions)) == list(range(len(ids)))
+    assert any(0 in part and 5 in part for part in partitions)

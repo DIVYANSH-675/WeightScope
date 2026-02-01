@@ -61,6 +61,13 @@ class WeightRegressor(nn.Module):
 
 def group_split(run_ids, seed=0):
     """Split whole training runs, never individual snapshots of a shared run."""
+    run_ids = np.asarray(run_ids)
+    if run_ids.ndim != 1 or run_ids.size == 0 or run_ids.dtype.kind not in "iufUS":
+        raise ValueError(
+            "run_ids must be a nonempty one-dimensional array of numeric or string IDs"
+        )
+    if run_ids.dtype.kind in "iuf" and not np.isfinite(run_ids).all():
+        raise ValueError("run_ids must not contain NaN or infinity")
     groups = np.unique(run_ids)
     if len(groups) < 5:
         raise ValueError("At least five independent run IDs are required")
