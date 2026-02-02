@@ -67,6 +67,20 @@ CI runs the suite on Python 3.10 and 3.12. Small synthetic runs validate softwar
 
 This is not the paper's full Transformer-NFN architecture or its full symmetry group. The descriptor ignores embedding, normalization, feed-forward, and classifier parameters, so different-performing models can have identical descriptors. The tiny generated bank is not evidence of generalization to pretrained LLMs. Group splitting prevents snapshot leakage, but all generated models share a task and data distribution; broader claims require independent tasks and real checkpoint banks.
 
+## Preparing independent run groups
+
+Use a one-dimensional numeric or string `run_id` array. Every snapshot from the same training run must carry the same ID. At least five distinct IDs are needed for training, validation, and test partitions.
+
+```python
+from weightscope.model import group_split
+
+train, validation, test = group_split(
+    ['run-a', 'run-a', 'run-b', 'run-c', 'run-d', 'run-e'], seed=11
+)
+```
+
+The two snapshots from `run-a` stay together. The returned arrays contain row indices, not IDs. NaN and infinite IDs are rejected because missing identifiers could otherwise leave samples out of every partition. Nested arrays and object-valued IDs are unsupported; encode structured experiment identifiers as stable strings first.
+
 ## License
 
 The original code in this repository is MIT licensed, copyright 2026 Divyansh Gupta. See [LICENSE](LICENSE). The cited paper is a separate work; this code's license does not relicense the paper or external datasets.
