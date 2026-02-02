@@ -75,7 +75,7 @@ Use a one-dimensional numeric or string `run_id` array. Every snapshot from the 
 from weightscope.model import group_split
 
 train, validation, test = group_split(
-    ['run-a', 'run-a', 'run-b', 'run-c', 'run-d', 'run-e'], seed=11
+    ["run-a", "run-a", "run-b", "run-c", "run-d", "run-e"], seed=11
 )
 ```
 
