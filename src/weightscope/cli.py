@@ -5,6 +5,7 @@ from pathlib import Path
 import numpy as np
 import torch
 
+from . import __version__
 from .io import seed_all, start_run, write_json
 from .model import WeightRegressor, group_split, load_bank, make_bank
 
@@ -13,6 +14,7 @@ def main():
     p = argparse.ArgumentParser(
         description="Predict tiny Transformer quality from attention-weight invariants"
     )
+    p.add_argument("--version", action="version", version="weightscope " + __version__)
     p.add_argument("command", choices=["bank", "train", "evaluate"])
     p.add_argument("--data")
     p.add_argument("--checkpoint")
