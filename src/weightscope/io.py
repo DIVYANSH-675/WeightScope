@@ -7,6 +7,8 @@ from pathlib import Path
 import numpy as np
 import torch
 
+from .artifacts import write_json as write_json
+
 
 def seed_all(seed):
     if seed < 0:
@@ -25,13 +27,6 @@ def start_run(output, config):
     with (output / "config.json").open("x") as stream:
         json.dump(manifest, stream, indent=2, allow_nan=False)
     return output
-
-
-def write_json(path, value):
-    path = Path(path)
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("x") as stream:
-        stream.write(json.dumps(value, indent=2, allow_nan=False) + "\n")
 
 
 def write_npz(path, **arrays):
