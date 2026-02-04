@@ -30,3 +30,16 @@ def test_streamed_digest_has_known_value_and_detects_changes(tmp_path):
     assert file_digest(path) != "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"
     with pytest.raises(ValueError):
         file_digest(path, 0)
+
+
+def test_manifest_paths_are_portable_and_sorted(tmp_path):
+    from weightscope.artifacts import build_manifest
+
+    (tmp_path / "b.txt").write_text("b")
+    (tmp_path / "a.txt").write_text("a")
+    manifest = build_manifest(["b.txt", "a.txt", "a.txt"], tmp_path, {"seed": 7})
+    assert [row["path"] for row in manifest["files"]] == ["a.txt", "b.txt"]
+    assert manifest["metadata"] == {"seed": 7}
+    assert manifest["files"][0]["bytes"] == 1
+    with pytest.raises(ValueError, match="inside"):
+        build_manifest(["../outside.txt"], tmp_path)
