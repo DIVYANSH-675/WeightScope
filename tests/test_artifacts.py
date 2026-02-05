@@ -59,3 +59,17 @@ def test_manifest_verification_detects_changed_and_missing_inputs(tmp_path):
     manifest["files"][0]["path"] = "../outside.txt"
     with pytest.raises(ValueError, match="inside"):
         verify_manifest(manifest, tmp_path)
+
+
+def test_metric_summary_streams_jsonl_and_ignores_boolean_flags(tmp_path):
+    from weightscope.artifacts import read_records, summarize_metrics
+
+    path = tmp_path / "metrics.jsonl"
+    path.write_text('{"loss":1,"ok":true}\n\n{"loss":3}\n')
+    summary = summarize_metrics(read_records(path))
+    assert summary["rows"] == 2
+    assert summary["metrics"] == {
+        "loss": {"count": 2, "mean": 2.0, "min": 1.0, "max": 3.0, "std": 1.0}
+    }
+    with pytest.raises(ValueError, match="finite"):
+        summarize_metrics([{"loss": float("nan")}])

@@ -93,3 +93,62 @@ def verify_manifest(manifest, base="."):
             status = "missing"
         results.append(dict(path=path, status=status))
     return dict(valid=all(row["status"] == "ok" for row in results), files=results)
+
+
+def read_records(path):
+    """Read JSON arrays, single records, saved rows/episodes, or streamed JSONL."""
+    path = Path(path)
+    with path.open(encoding="utf-8") as stream:
+        if path.suffix.lower() == ".jsonl":
+            records = (json.loads(line) for line in stream if line.strip())
+        else:
+            payload = json.load(stream)
+            if isinstance(payload, dict):
+                payload = payload.get("rows", payload.get("episodes", [payload]))
+            if not isinstance(payload, list):
+                raise ValueError("Metrics must contain an array or object")
+            records = payload
+        for row in records:
+            if not isinstance(row, dict) or any(not isinstance(key, str) for key in row):
+                raise ValueError("Each metric record must be an object with string keys")
+            yield row
+
+
+def _finite_number(value):
+    import math
+
+    if type(value) not in (int, float):
+        raise ValueError("Metric values must be real numbers, excluding booleans")
+    try:
+        value = float(value)
+    except OverflowError as error:
+        raise ValueError("Metric values must be finite") from error
+    if not math.isfinite(value):
+        raise ValueError("Metric values must be finite")
+    return value
+
+
+def summarize_metrics(records):
+    """Use Welford accumulation for numeric columns; booleans are not metrics."""
+    columns = {}
+    rows = 0
+    for record in records:
+        if not isinstance(record, dict):
+            raise ValueError("Metric records must be objects")
+        rows += 1
+        for key, value in record.items():
+            if type(value) not in (int, float):
+                continue
+            value = _finite_number(value)
+            stats = columns.setdefault(key, dict(count=0, mean=0.0, m2=0.0, min=value, max=value))
+            stats["count"] += 1
+            delta = value - stats["mean"]
+            stats["mean"] += delta / stats["count"]
+            stats["m2"] += delta * (value - stats["mean"])
+            stats["min"] = min(stats["min"], value)
+            stats["max"] = max(stats["max"], value)
+    if not columns:
+        raise ValueError("No numeric metrics were found")
+    for stats in columns.values():
+        stats["std"] = max(0.0, stats.pop("m2") / stats["count"]) ** 0.5
+    return dict(rows=rows, metrics=columns)
