@@ -43,3 +43,19 @@ def test_manifest_paths_are_portable_and_sorted(tmp_path):
     assert manifest["files"][0]["bytes"] == 1
     with pytest.raises(ValueError, match="inside"):
         build_manifest(["../outside.txt"], tmp_path)
+
+
+def test_manifest_verification_detects_changed_and_missing_inputs(tmp_path):
+    from weightscope.artifacts import build_manifest, verify_manifest
+
+    path = tmp_path / "data.txt"
+    path.write_text("original")
+    manifest = build_manifest(["data.txt"], tmp_path)
+    assert verify_manifest(manifest, tmp_path)["valid"]
+    path.write_text("edited")
+    assert verify_manifest(manifest, tmp_path)["files"][0]["status"] == "changed"
+    path.unlink()
+    assert verify_manifest(manifest, tmp_path)["files"][0]["status"] == "missing"
+    manifest["files"][0]["path"] = "../outside.txt"
+    with pytest.raises(ValueError, match="inside"):
+        verify_manifest(manifest, tmp_path)

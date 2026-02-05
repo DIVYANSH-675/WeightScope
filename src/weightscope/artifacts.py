@@ -53,3 +53,43 @@ def build_manifest(paths, base=".", metadata=None):
             path=relative, sha256=file_digest(resolved), bytes=resolved.stat().st_size
         )
     return dict(schema_version=1, metadata=metadata, files=[files[key] for key in sorted(files)])
+
+
+def verify_manifest(manifest, base="."):
+    """Return per-file verification results; changed inputs never pass silently."""
+    if (
+        not isinstance(manifest, dict)
+        or type(manifest.get("schema_version")) is not int
+        or manifest["schema_version"] != 1
+    ):
+        raise ValueError("Unsupported manifest schema")
+    files = manifest.get("files")
+    if not isinstance(files, list) or not files:
+        raise ValueError("Manifest must list at least one file")
+    results = []
+    seen = set()
+    for entry in files:
+        if not isinstance(entry, dict) or not isinstance(entry.get("path"), str):
+            raise ValueError("Invalid manifest file entry")
+        path = entry["path"]
+        digest = entry.get("sha256")
+        size = entry.get("bytes")
+        if (
+            Path(path).is_absolute()
+            or path in seen
+            or not isinstance(digest, str)
+            or len(digest) != 64
+            or any(c not in "0123456789abcdef" for c in digest)
+            or type(size) is not int
+            or size < 0
+        ):
+            raise ValueError("Invalid path, digest, or byte count in manifest")
+        seen.add(path)
+        resolved, _ = _within_base(path, base)
+        try:
+            valid = file_digest(resolved) == digest and resolved.stat().st_size == size
+            status = "ok" if valid else "changed"
+        except FileNotFoundError:
+            status = "missing"
+        results.append(dict(path=path, status=status))
+    return dict(valid=all(row["status"] == "ok" for row in results), files=results)
