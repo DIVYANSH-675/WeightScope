@@ -152,3 +152,32 @@ def summarize_metrics(records):
     for stats in columns.values():
         stats["std"] = max(0.0, stats.pop("m2") / stats["count"]) ** 0.5
     return dict(rows=rows, metrics=columns)
+
+
+def export_csv(records, path):
+    """Export flat records with a stable union of columns and exclusive creation."""
+    import csv
+    import io
+
+    records = list(records)
+    if not records:
+        raise ValueError("At least one record is required for CSV export")
+    for record in records:
+        if not isinstance(record, dict) or any(not isinstance(key, str) for key in record):
+            raise ValueError("CSV records must have string keys")
+        for value in record.values():
+            if value is not None and type(value) not in (str, int, float, bool):
+                raise ValueError("CSV export accepts flat scalar records only")
+            if type(value) in (int, float):
+                _finite_number(value)
+    columns = sorted({key for record in records for key in record})
+    if not columns:
+        raise ValueError("CSV export requires at least one column")
+    buffer = io.StringIO(newline="")
+    writer = csv.DictWriter(buffer, fieldnames=columns)
+    writer.writeheader()
+    writer.writerows(records)
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("x", encoding="utf-8", newline="") as stream:
+        stream.write(buffer.getvalue())

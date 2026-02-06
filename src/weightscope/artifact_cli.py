@@ -4,14 +4,21 @@ import argparse
 import json
 from pathlib import Path
 
-from .artifacts import build_manifest, read_records, summarize_metrics, verify_manifest, write_json
+from .artifacts import (
+    build_manifest,
+    export_csv,
+    read_records,
+    summarize_metrics,
+    verify_manifest,
+    write_json,
+)
 
 
 def main():
     parser = argparse.ArgumentParser(
         description="Inspect reproducibility artifacts without loading model weights"
     )
-    parser.add_argument("command", choices=["manifest", "verify", "summary"])
+    parser.add_argument("command", choices=["manifest", "verify", "summary", "csv"])
     parser.add_argument("--input")
     parser.add_argument("--inputs", nargs="+", default=[])
     parser.add_argument("--base", default=".")
@@ -29,6 +36,10 @@ def main():
             )
         elif args.command == "summary":
             report = summarize_metrics(read_records(args.input))
+        elif args.command == "csv":
+            export_csv(read_records(args.input), args.output)
+            print(json.dumps(dict(output=args.output)))
+            return
         write_json(args.output, report)
     except (ValueError, OSError) as error:
         parser.error(str(error))

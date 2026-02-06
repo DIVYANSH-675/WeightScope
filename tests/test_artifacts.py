@@ -73,3 +73,18 @@ def test_metric_summary_streams_jsonl_and_ignores_boolean_flags(tmp_path):
     }
     with pytest.raises(ValueError, match="finite"):
         summarize_metrics([{"loss": float("nan")}])
+
+
+def test_csv_preserves_quoted_values_and_missing_columns(tmp_path):
+    import csv
+
+    from weightscope.artifacts import export_csv
+
+    path = tmp_path / "metrics.csv"
+    export_csv([{"loss": 1.0, "label": "first,\nsecond"}, {"loss": 2.0, "step": 1}], path)
+    with path.open(newline="") as stream:
+        rows = list(csv.DictReader(stream))
+    assert rows[0]["label"] == "first,\nsecond"
+    assert rows[0]["step"] == "" and rows[1]["step"] == "1"
+    with pytest.raises(FileExistsError):
+        export_csv([{"loss": 0}], path)
