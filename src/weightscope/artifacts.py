@@ -181,3 +181,26 @@ def export_csv(records, path):
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("x", encoding="utf-8", newline="") as stream:
         stream.write(buffer.getvalue())
+
+
+def compare_metrics(before, after):
+    """Compare column means; leave metric direction and scientific interpretation explicit."""
+    left = summarize_metrics(before)["metrics"]
+    right = summarize_metrics(after)["metrics"]
+    common = sorted(left.keys() & right.keys())
+    if not common:
+        raise ValueError("Reports have no numeric metrics in common")
+    differences = {}
+    for key in common:
+        old, new = left[key]["mean"], right[key]["mean"]
+        differences[key] = dict(
+            before=old,
+            after=new,
+            delta=new - old,
+            relative_change=(new - old) / abs(old) if old else None,
+        )
+    return dict(
+        metrics=differences,
+        only_before=sorted(left.keys() - right.keys()),
+        only_after=sorted(right.keys() - left.keys()),
+    )

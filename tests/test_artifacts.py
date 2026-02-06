@@ -88,3 +88,12 @@ def test_csv_preserves_quoted_values_and_missing_columns(tmp_path):
     assert rows[0]["step"] == "" and rows[1]["step"] == "1"
     with pytest.raises(FileExistsError):
         export_csv([{"loss": 0}], path)
+
+
+def test_comparison_reports_signed_changes_and_undefined_zero_baselines():
+    from weightscope.artifacts import compare_metrics
+
+    report = compare_metrics([{"loss": 4, "cost": 0, "old": 1}], [{"loss": 2, "cost": 1, "new": 3}])
+    assert report["metrics"]["loss"]["relative_change"] == -0.5
+    assert report["metrics"]["cost"]["relative_change"] is None
+    assert report["only_before"] == ["old"] and report["only_after"] == ["new"]

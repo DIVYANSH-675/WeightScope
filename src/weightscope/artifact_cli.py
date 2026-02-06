@@ -6,6 +6,7 @@ from pathlib import Path
 
 from .artifacts import (
     build_manifest,
+    compare_metrics,
     export_csv,
     read_records,
     summarize_metrics,
@@ -18,12 +19,14 @@ def main():
     parser = argparse.ArgumentParser(
         description="Inspect reproducibility artifacts without loading model weights"
     )
-    parser.add_argument("command", choices=["manifest", "verify", "summary", "csv"])
+    parser.add_argument("command", choices=["manifest", "verify", "summary", "csv", "compare"])
     parser.add_argument("--input")
     parser.add_argument("--inputs", nargs="+", default=[])
     parser.add_argument("--base", default=".")
     parser.add_argument("--metadata", default="{}", help="JSON object stored with a manifest")
     parser.add_argument("--output", required=True)
+    parser.add_argument("--before")
+    parser.add_argument("--after")
     args = parser.parse_args()
     if args.command not in ("manifest", "compare") and not args.input:
         parser.error(args.command + " requires --input")
@@ -40,6 +43,10 @@ def main():
             export_csv(read_records(args.input), args.output)
             print(json.dumps(dict(output=args.output)))
             return
+        elif args.command == "compare":
+            if not args.before or not args.after:
+                parser.error("compare requires --before and --after")
+            report = compare_metrics(read_records(args.before), read_records(args.after))
         write_json(args.output, report)
     except (ValueError, OSError) as error:
         parser.error(str(error))
