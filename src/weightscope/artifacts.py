@@ -204,3 +204,36 @@ def compare_metrics(before, after):
         only_before=sorted(left.keys() - right.keys()),
         only_after=sorted(right.keys() - left.keys()),
     )
+
+
+def bootstrap_mean(values, samples=1000, confidence=0.95, seed=0):
+    """Seeded percentile bootstrap of a mean, assuming independent observations."""
+    import random
+    import statistics
+
+    values = [_finite_number(value) for value in values]
+    if not values or type(samples) is not int or not 1 <= samples <= 10000:
+        raise ValueError("Provide values and an integer sample count in [1,10000]")
+    if type(confidence) not in (int, float) or not 0 < confidence < 1:
+        raise ValueError("confidence must be between zero and one")
+    if type(seed) is not int or seed < 0:
+        raise ValueError("seed must be a nonnegative integer")
+    rng = random.Random(seed)
+    means = sorted(statistics.fmean(rng.choices(values, k=len(values))) for _ in range(samples))
+
+    def percentile(probability):
+        position = probability * (len(means) - 1)
+        lower = int(position)
+        upper = min(lower + 1, len(means) - 1)
+        return means[lower] + (position - lower) * (means[upper] - means[lower])
+
+    tail = (1 - confidence) / 2
+    return dict(
+        count=len(values),
+        mean=statistics.fmean(values),
+        confidence=confidence,
+        lower=percentile(tail),
+        upper=percentile(1 - tail),
+        samples=samples,
+        seed=seed,
+    )

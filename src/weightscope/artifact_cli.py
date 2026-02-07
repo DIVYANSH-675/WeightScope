@@ -5,6 +5,7 @@ import json
 from pathlib import Path
 
 from .artifacts import (
+    bootstrap_mean,
     build_manifest,
     compare_metrics,
     export_csv,
@@ -19,7 +20,9 @@ def main():
     parser = argparse.ArgumentParser(
         description="Inspect reproducibility artifacts without loading model weights"
     )
-    parser.add_argument("command", choices=["manifest", "verify", "summary", "csv", "compare"])
+    parser.add_argument(
+        "command", choices=["manifest", "verify", "summary", "csv", "compare", "bootstrap"]
+    )
     parser.add_argument("--input")
     parser.add_argument("--inputs", nargs="+", default=[])
     parser.add_argument("--base", default=".")
@@ -27,6 +30,10 @@ def main():
     parser.add_argument("--output", required=True)
     parser.add_argument("--before")
     parser.add_argument("--after")
+    parser.add_argument("--key")
+    parser.add_argument("--samples", type=int, default=1000)
+    parser.add_argument("--confidence", type=float, default=0.95)
+    parser.add_argument("--seed", type=int, default=0)
     args = parser.parse_args()
     if args.command not in ("manifest", "compare") and not args.input:
         parser.error(args.command + " requires --input")
@@ -47,6 +54,16 @@ def main():
             if not args.before or not args.after:
                 parser.error("compare requires --before and --after")
             report = compare_metrics(read_records(args.before), read_records(args.after))
+        elif args.command == "bootstrap":
+            if not args.key:
+                parser.error("bootstrap requires --key")
+            rows = read_records(args.input)
+            values = []
+            for row in rows:
+                if args.key not in row:
+                    raise ValueError("Every record must contain the selected bootstrap metric")
+                values.append(row[args.key])
+            report = bootstrap_mean(values, args.samples, args.confidence, args.seed)
         write_json(args.output, report)
     except (ValueError, OSError) as error:
         parser.error(str(error))

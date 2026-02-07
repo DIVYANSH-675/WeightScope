@@ -97,3 +97,15 @@ def test_comparison_reports_signed_changes_and_undefined_zero_baselines():
     assert report["metrics"]["loss"]["relative_change"] == -0.5
     assert report["metrics"]["cost"]["relative_change"] is None
     assert report["only_before"] == ["old"] and report["only_after"] == ["new"]
+
+
+def test_bootstrap_is_seeded_and_handles_constant_observations():
+    from weightscope.artifacts import bootstrap_mean
+
+    first = bootstrap_mean([1, 2, 4, 8], samples=100, seed=7)
+    assert first == bootstrap_mean([1, 2, 4, 8], samples=100, seed=7)
+    assert 1 <= first["lower"] <= first["upper"] <= 8
+    constant = bootstrap_mean([3, 3, 3], samples=10)
+    assert constant["lower"] == constant["upper"] == 3
+    with pytest.raises(ValueError):
+        bootstrap_mean([1], confidence=1)
