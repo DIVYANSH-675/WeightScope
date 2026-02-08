@@ -32,6 +32,12 @@ def descriptors(q, k, v, o):
     """Per-head QK^T and VO. These do not depend on internal head bases."""
     if q.ndim != 4 or q.shape != k.shape or q.shape != v.shape:
         raise ValueError("q, k, v must share shape [checkpoints, heads, width, head_width]")
+    if min(q.shape) < 1:
+        raise ValueError("Attention weight axes must be nonempty")
+    if any(
+        not value.is_floating_point() or not torch.isfinite(value).all() for value in (q, k, v, o)
+    ):
+        raise ValueError("Attention weights must be finite floating-point tensors")
     if o.shape != (*q.shape[:2], q.shape[3], q.shape[2]):
         raise ValueError("o must have shape [checkpoints, heads, head_width, width]")
     return torch.cat([(q @ k.transpose(-1, -2)).flatten(2), (v @ o).flatten(2)], -1)

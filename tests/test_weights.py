@@ -84,3 +84,15 @@ def test_invalid_run_ids_cannot_silently_drop_rows():
     partitions = group_split(ids)
     assert sorted(np.concatenate(partitions)) == list(range(len(ids)))
     assert any(0 in part and 5 in part for part in partitions)
+
+
+def test_attention_descriptors_reject_empty_and_nonfinite_weights():
+    import pytest
+
+    q = torch.zeros(2, 1, 3, 2)
+    o = torch.zeros(2, 1, 2, 3)
+    with pytest.raises(ValueError, match="nonempty"):
+        descriptors(q[:0], q[:0], q[:0], o[:0])
+    q[0, 0, 0, 0] = float("nan")
+    with pytest.raises(ValueError, match="finite"):
+        descriptors(q, q, q, o)
