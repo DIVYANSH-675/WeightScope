@@ -84,3 +84,23 @@ The two snapshots from `run-a` stay together. The returned arrays contain row in
 ## License
 
 The original code in this repository is MIT licensed, copyright 2026 Divyansh Gupta. See [LICENSE](LICENSE). The cited paper is a separate work; this code's license does not relicense the paper or external datasets.
+
+
+## Reproducibility and report utilities
+
+The standard-library artifact CLI can inspect saved experiments without loading a model. The following commands use a small illustrative fixture, not benchmark results:
+
+```bash
+python -m weightscope.artifact_cli manifest --inputs examples/metrics-sample.json --base . --metadata '{"purpose":"example"}' --output runs/manifest.json
+python -m weightscope.artifact_cli verify --input runs/manifest.json --base . --output runs/verification.json
+python -m weightscope.artifact_cli summary --input examples/metrics-sample.json --output runs/summary.json
+python -m weightscope.artifact_cli csv --input examples/metrics-sample.json --output runs/metrics.csv
+python -m weightscope.artifact_cli compare --before examples/metrics-sample.json --after examples/metrics-sample.json --output runs/comparison.json
+python -m weightscope.artifact_cli bootstrap --input examples/metrics-sample.json --key value --samples 1000 --seed 7 --output runs/interval.json
+```
+
+The installed `weightscope-artifacts` command offers the same interface. Use fresh output filenames: existing artifacts are never overwritten. Manifests store SHA-256 hashes and paths relative to `--base`; keep input files fixed while creating or verifying a manifest. Verification exits with status 1 for changed or missing inputs, and status 2 for invalid arguments or manifests.
+
+Metric summaries accept JSON arrays, single objects, reports containing `rows` or `episodes`, and streamed JSONL. They summarize numeric fields with population standard deviation and ignore boolean/nonnumeric fields. CSV export accepts flat scalar records; nested data must be transformed first. Comparisons report signed changes, without assuming whether larger values are better. Relative change is null when the baseline is zero.
+
+Bootstrap intervals assume independent observations. Correlated training steps or snapshots from the same run are not independent experimental repetitions; aggregate by run before interpreting an interval. These intervals do not calibrate model uncertainty.
