@@ -56,6 +56,10 @@ class WeightRegressor(nn.Module):
         )
 
     def fit_normalizer(self, train):
+        if train.ndim != 3 or min(train.shape) < 1 or train.shape[-1] != len(self.center):
+            raise ValueError("Expected nonempty [checkpoints,heads,features] training descriptors")
+        if not train.is_floating_point() or not torch.isfinite(train).all():
+            raise ValueError("Training descriptors must be finite floating-point values")
         with torch.no_grad():
             self.center.copy_(train.mean((0, 1)))
             self.scale.copy_(train.std((0, 1), unbiased=False).clamp_min(1e-5))

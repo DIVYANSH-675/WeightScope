@@ -96,3 +96,20 @@ def test_attention_descriptors_reject_empty_and_nonfinite_weights():
     q[0, 0, 0, 0] = float("nan")
     with pytest.raises(ValueError, match="finite"):
         descriptors(q, q, q, o)
+
+
+def test_invalid_normalization_data_cannot_corrupt_buffers():
+    import pytest
+
+    model = WeightRegressor(4)
+    original = model.center.clone()
+    for features in (
+        torch.empty(0, 2, 4),
+        torch.ones(2, 2, 3),
+        torch.full((2, 2, 4), float("nan")),
+    ):
+        with pytest.raises(ValueError):
+            model.fit_normalizer(features)
+        torch.testing.assert_close(model.center, original)
+    model.fit_normalizer(torch.ones(2, 2, 4))
+    assert torch.isfinite(model(torch.ones(1, 2, 4))).all()
