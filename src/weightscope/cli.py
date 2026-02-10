@@ -7,7 +7,7 @@ import torch
 
 from . import __version__
 from .io import seed_all, start_run, write_json
-from .model import WeightRegressor, group_split, load_bank, make_bank
+from .model import WeightRegressor, group_split, load_bank, make_bank, prediction_rows
 
 
 def main():
@@ -63,6 +63,7 @@ def main():
             mae=float((prediction - y).abs().mean()),
             training_mean_baseline_mae=float((y - state["training_mean"]).abs().mean()),
             count=len(y),
+            predictions=prediction_rows(prediction.numpy(), y.numpy(), run_ids),
         )
         write_json(a.output, report)
         print(json.dumps(report))

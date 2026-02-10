@@ -131,3 +131,26 @@ def load_bank(path):
     if (accuracy < 0).any() or (accuracy > 1).any():
         raise ValueError("Accuracy must be in [0, 1]")
     return features, accuracy, arrays["run_id"]
+
+
+def prediction_rows(prediction, target, run_ids):
+    """Keep each predicted checkpoint tied to its run and observed accuracy."""
+    prediction = np.asarray(prediction)
+    target = np.asarray(target)
+    run_ids = np.asarray(run_ids)
+    if (
+        prediction.ndim != 1
+        or prediction.shape != target.shape
+        or prediction.shape != run_ids.shape
+    ):
+        raise ValueError("Predictions, targets, and run IDs must have matching vector shapes")
+    return [
+        dict(
+            index=index,
+            run_id=run_id,
+            prediction=float(pred),
+            target=float(actual),
+            error=float(pred - actual),
+        )
+        for index, (pred, actual, run_id) in enumerate(zip(prediction, target, run_ids.tolist()))
+    ]

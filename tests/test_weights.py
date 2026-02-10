@@ -113,3 +113,12 @@ def test_invalid_normalization_data_cannot_corrupt_buffers():
         torch.testing.assert_close(model.center, original)
     model.fit_normalizer(torch.ones(2, 2, 4))
     assert torch.isfinite(model(torch.ones(1, 2, 4))).all()
+
+
+def test_prediction_rows_keep_snapshot_run_identifiers():
+    from weightscope.model import prediction_rows
+
+    rows = prediction_rows([0.7, 0.9], [0.8, 0.8], ["run-a", "run-a"])
+    assert [row["index"] for row in rows] == [0, 1]
+    assert rows[1]["run_id"] == "run-a"
+    np.testing.assert_allclose([row["error"] for row in rows], [-0.1, 0.1])
