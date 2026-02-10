@@ -22,9 +22,12 @@ def main():
     p.add_argument("--count", type=int, default=20)
     p.add_argument("--steps", type=int, default=20)
     p.add_argument("--learning-rate", type=float, default=0.002)
+    p.add_argument("--weight-decay", type=float, default=0.01)
     p.add_argument("--epochs", type=int, default=50)
     p.add_argument("--seed", type=int, default=11)
     a = p.parse_args()
+    if not np.isfinite(a.weight_decay) or a.weight_decay < 0:
+        p.error("weight-decay must be finite and nonnegative")
     if not np.isfinite(a.learning_rate) or a.learning_rate <= 0:
         p.error("learning-rate must be finite and positive")
     a.output = a.output or (
@@ -67,7 +70,9 @@ def main():
     output = start_run(a.output, vars(a))
     train, valid, test = group_split(run_ids, a.seed)
     model.fit_normalizer(x[train])
-    optimizer = torch.optim.AdamW(model.parameters(), lr=a.learning_rate, weight_decay=0.01)
+    optimizer = torch.optim.AdamW(
+        model.parameters(), lr=a.learning_rate, weight_decay=a.weight_decay
+    )
     history = []
     best = float("inf")
     training_mean = float(y[train].mean())
