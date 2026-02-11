@@ -154,3 +154,18 @@ def prediction_rows(prediction, target, run_ids):
         )
         for index, (pred, actual, run_id) in enumerate(zip(prediction, target, run_ids.tolist()))
     ]
+
+
+def regression_metrics(prediction, target):
+    prediction = np.asarray(prediction, dtype=float)
+    target = np.asarray(target, dtype=float)
+    if prediction.ndim != 1 or not len(prediction) or prediction.shape != target.shape:
+        raise ValueError("Predictions and targets must be matching nonempty vectors")
+    if not np.isfinite(prediction).all() or not np.isfinite(target).all():
+        raise ValueError("Predictions and targets must be finite")
+    error = prediction - target
+    return dict(
+        mae=float(np.abs(error).mean()),
+        rmse=float(np.sqrt(np.square(error).mean())),
+        bias=float(error.mean()),
+    )

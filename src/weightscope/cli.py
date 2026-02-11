@@ -7,7 +7,14 @@ import torch
 
 from . import __version__
 from .io import seed_all, start_run, write_json
-from .model import WeightRegressor, group_split, load_bank, make_bank, prediction_rows
+from .model import (
+    WeightRegressor,
+    group_split,
+    load_bank,
+    make_bank,
+    prediction_rows,
+    regression_metrics,
+)
 
 
 def main():
@@ -60,7 +67,7 @@ def main():
         with torch.no_grad():
             prediction = model(x)
         report = dict(
-            mae=float((prediction - y).abs().mean()),
+            **regression_metrics(prediction.numpy(), y.numpy()),
             training_mean_baseline_mae=float((y - state["training_mean"]).abs().mean()),
             count=len(y),
             predictions=prediction_rows(prediction.numpy(), y.numpy(), run_ids),
@@ -99,7 +106,12 @@ def main():
     model.load_state_dict(torch.load(output / "best.pt", weights_only=True)["model"])
     with torch.no_grad():
         report = dict(
-            test_mae=float((model(x[test]) - y[test]).abs().mean()),
+            **{
+                "test_" + key: value
+                for key, value in regression_metrics(
+                    model(x[test]).numpy(), y[test].numpy()
+                ).items()
+            },
             test_training_mean_baseline_mae=float((y[test] - training_mean).abs().mean()),
             train_count=len(train),
             validation_count=len(valid),

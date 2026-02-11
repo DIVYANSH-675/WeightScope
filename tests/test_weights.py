@@ -122,3 +122,14 @@ def test_prediction_rows_keep_snapshot_run_identifiers():
     assert [row["index"] for row in rows] == [0, 1]
     assert rows[1]["run_id"] == "run-a"
     np.testing.assert_allclose([row["error"] for row in rows], [-0.1, 0.1])
+
+
+def test_regression_metrics_distinguish_bias_and_magnitude():
+    import pytest
+
+    from weightscope.model import regression_metrics
+
+    report = regression_metrics([0, 2], [1, 1])
+    assert report == {"mae": 1.0, "rmse": 1.0, "bias": 0.0}
+    with pytest.raises(ValueError):
+        regression_metrics([float("nan")], [1])
