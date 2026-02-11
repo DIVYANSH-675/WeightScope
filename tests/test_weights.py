@@ -130,6 +130,16 @@ def test_regression_metrics_distinguish_bias_and_magnitude():
     from weightscope.model import regression_metrics
 
     report = regression_metrics([0, 2], [1, 1])
-    assert report == {"mae": 1.0, "rmse": 1.0, "bias": 0.0}
+    assert report == {"mae": 1.0, "rmse": 1.0, "bias": 0.0, "spearman": None}
     with pytest.raises(ValueError):
         regression_metrics([float("nan")], [1])
+
+
+def test_rank_correlation_handles_ties_and_constant_targets():
+    import pytest
+
+    from weightscope.model import regression_metrics
+
+    assert regression_metrics([1, 1, 3], [1, 1, 9])["spearman"] == pytest.approx(1.0)
+    assert regression_metrics([1, 2, 3], [3, 2, 1])["spearman"] == pytest.approx(-1.0)
+    assert regression_metrics([1, 1], [1, 2])["spearman"] is None

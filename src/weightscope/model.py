@@ -168,4 +168,26 @@ def regression_metrics(prediction, target):
         mae=float(np.abs(error).mean()),
         rmse=float(np.sqrt(np.square(error).mean())),
         bias=float(error.mean()),
+        spearman=spearman_correlation(prediction, target),
     )
+
+
+def spearman_correlation(prediction, target):
+    """Average tied ranks; return None when a ranking is undefined."""
+
+    def ranks(values):
+        order = np.argsort(values, kind="stable")
+        result = np.empty(len(values), dtype=float)
+        start = 0
+        while start < len(values):
+            end = start + 1
+            while end < len(values) and values[order[end]] == values[order[start]]:
+                end += 1
+            result[order[start:end]] = (start + end - 1) / 2
+            start = end
+        return result
+
+    left, right = ranks(np.asarray(prediction)), ranks(np.asarray(target))
+    left, right = left - left.mean(), right - right.mean()
+    norm = np.linalg.norm(left) * np.linalg.norm(right)
+    return float(np.dot(left, right) / norm) if norm else None
