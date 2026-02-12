@@ -109,3 +109,13 @@ def test_bootstrap_is_seeded_and_handles_constant_observations():
     assert constant["lower"] == constant["upper"] == 3
     with pytest.raises(ValueError):
         bootstrap_mean([1], confidence=1)
+
+
+def test_numeric_record_counters_are_not_mistaken_for_record_arrays(tmp_path):
+    from weightscope.artifacts import read_records, summarize_metrics
+
+    path = tmp_path / "summary.json"
+    record = {"rows": 2, "episodes": 5, "loss": 0.25}
+    write_json(path, record)
+    assert list(read_records(path)) == [record]
+    assert summarize_metrics(read_records(path))["metrics"]["loss"]["mean"] == 0.25

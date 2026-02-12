@@ -104,7 +104,12 @@ def read_records(path):
         else:
             payload = json.load(stream)
             if isinstance(payload, dict):
-                payload = payload.get("rows", payload.get("episodes", [payload]))
+                if isinstance(payload.get("rows"), list):
+                    payload = payload["rows"]
+                elif isinstance(payload.get("episodes"), list):
+                    payload = payload["episodes"]
+                else:
+                    payload = [payload]
             if not isinstance(payload, list):
                 raise ValueError("Metrics must contain an array or object")
             records = payload
