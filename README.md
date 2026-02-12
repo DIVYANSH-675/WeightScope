@@ -104,3 +104,10 @@ The installed `weightscope-artifacts` command offers the same interface. Use fre
 Metric summaries accept JSON arrays, single objects, reports containing `rows` or `episodes`, and streamed JSONL. They summarize numeric fields with population standard deviation and ignore boolean/nonnumeric fields. CSV export accepts flat scalar records; nested data must be transformed first. Comparisons report signed changes, without assuming whether larger values are better. Relative change is null when the baseline is zero.
 
 Bootstrap intervals assume independent observations. Correlated training steps or snapshots from the same run are not independent experimental repetitions; aggregate by run before interpreting an interval. These intervals do not calibrate model uncertainty.
+
+
+## Predictor diagnostics and tuning
+
+Use `--learning-rate` and `--weight-decay` for controlled regressor experiments. Defaults remain 0.002 and 0.01. Keep group splits and the training bank fixed when comparing these settings, and reserve final evaluation data for the final model.
+
+Evaluation includes MAE, RMSE, signed bias (prediction minus target), and Spearman rank correlation using average tied ranks. Spearman is null when either ranking is constant. The `predictions` array records each checkpoint index, run ID, prediction, target, and signed error so failures can be inspected without reconstructing row order. These diagnostics do not change the original release's underperforming benchmark results.
