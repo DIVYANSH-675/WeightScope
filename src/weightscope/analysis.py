@@ -28,3 +28,21 @@ def quantile(values, probability):
     upper = min(lower + 1, len(values) - 1)
     fraction = position - lower
     return (1 - fraction) * values[lower] + fraction * values[upper]
+
+
+def distribution_summary(values):
+    import statistics
+
+    values = _values(values)
+    q1, median, q3 = (quantile(values, p) for p in (0.25, 0.5, 0.75))
+    return dict(
+        count=len(values),
+        mean=statistics.fmean(values),
+        std=statistics.pstdev(values),
+        minimum=min(values),
+        maximum=max(values),
+        median=median,
+        q1=q1,
+        q3=q3,
+        iqr=q3 - q1,
+    )
