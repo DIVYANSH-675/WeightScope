@@ -27,3 +27,13 @@ def test_mad_is_translation_invariant_and_resists_one_extreme_value():
     assert median_absolute_deviation([1, 2, 3, 4, 1000]) == 1
     assert median_absolute_deviation([11, 12, 13, 14, 1010]) == 1
     assert median_absolute_deviation([7, 7]) == 0
+
+
+def test_trimmed_mean_removes_equal_tail_counts():
+    from weightscope.analysis import trimmed_mean
+
+    report = trimmed_mean([-100, 1, 2, 3, 100], 0.2)
+    assert report["mean"] == 2 and report["removed"] == 2
+    assert trimmed_mean([4], 0.49)["retained"] == 1
+    with pytest.raises(ValueError):
+        trimmed_mean([1, 2], 0.5)

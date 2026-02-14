@@ -53,3 +53,15 @@ def median_absolute_deviation(values):
     values = _values(values)
     center = quantile(values, 0.5)
     return quantile([abs(value - center) for value in values], 0.5)
+
+
+def trimmed_mean(values, fraction=0.1):
+    import statistics
+
+    values = sorted(_values(values))
+    fraction = _finite_number(fraction)
+    if not 0 <= fraction < 0.5:
+        raise ValueError("Trim fraction must lie in [0,0.5)")
+    cut = int(len(values) * fraction)
+    kept = values[cut : len(values) - cut]
+    return dict(mean=statistics.fmean(kept), retained=len(kept), removed=2 * cut, fraction=fraction)
