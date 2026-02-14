@@ -19,3 +19,11 @@ def test_distribution_summary_distinguishes_outliers_from_medians():
     assert result["median"] == 2.5 and result["mean"] == 26.5
     assert result["q1"] == 1.75 and result["q3"] == 27.25
     assert distribution_summary([5])["std"] == 0
+
+
+def test_mad_is_translation_invariant_and_resists_one_extreme_value():
+    from weightscope.analysis import median_absolute_deviation
+
+    assert median_absolute_deviation([1, 2, 3, 4, 1000]) == 1
+    assert median_absolute_deviation([11, 12, 13, 14, 1010]) == 1
+    assert median_absolute_deviation([7, 7]) == 0

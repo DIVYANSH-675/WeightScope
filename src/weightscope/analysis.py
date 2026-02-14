@@ -46,3 +46,10 @@ def distribution_summary(values):
         q3=q3,
         iqr=q3 - q1,
     )
+
+
+def median_absolute_deviation(values):
+    """Unscaled MAD; this is not a normal-distribution standard deviation estimate."""
+    values = _values(values)
+    center = quantile(values, 0.5)
+    return quantile([abs(value - center) for value in values], 0.5)
