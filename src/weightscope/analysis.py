@@ -65,3 +65,14 @@ def trimmed_mean(values, fraction=0.1):
     cut = int(len(values) * fraction)
     kept = values[cut : len(values) - cut]
     return dict(mean=statistics.fmean(kept), retained=len(kept), removed=2 * cut, fraction=fraction)
+
+
+def weighted_mean(values, weights):
+    import math
+
+    values, weights = _paired(values, weights)
+    if any(weight < 0 for weight in weights) or not max(weights):
+        raise ValueError("Weights must be nonnegative with a positive total")
+    scaled = [weight / max(weights) for weight in weights]
+    total = math.fsum(scaled)
+    return math.fsum(value * (weight / total) for value, weight in zip(values, scaled))

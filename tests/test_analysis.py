@@ -37,3 +37,15 @@ def test_trimmed_mean_removes_equal_tail_counts():
     assert trimmed_mean([4], 0.49)["retained"] == 1
     with pytest.raises(ValueError):
         trimmed_mean([1, 2], 0.5)
+
+
+def test_weighted_mean_preserves_weight_scale_invariance():
+    from weightscope.analysis import weighted_mean
+
+    assert weighted_mean([1, 5], [3, 1]) == 2
+    assert weighted_mean([1, 5], [300, 100]) == 2
+    assert weighted_mean([1, 5], [0, 1]) == 5
+    with pytest.raises(ValueError):
+        weighted_mean([1, 2], [0, 0])
+    with pytest.raises(ValueError):
+        weighted_mean([1, 2], [1, -1])
