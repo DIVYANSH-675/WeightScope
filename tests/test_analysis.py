@@ -49,3 +49,13 @@ def test_weighted_mean_preserves_weight_scale_invariance():
         weighted_mean([1, 2], [0, 0])
     with pytest.raises(ValueError):
         weighted_mean([1, 2], [1, -1])
+
+
+def test_standard_error_uses_sample_dispersion_and_sample_count():
+    from weightscope.analysis import mean_standard_error
+
+    report = mean_standard_error([1, 3])
+    assert report["sample_std"] == pytest.approx(2**0.5)
+    assert report["standard_error"] == pytest.approx(1)
+    with pytest.raises(ValueError):
+        mean_standard_error([1])

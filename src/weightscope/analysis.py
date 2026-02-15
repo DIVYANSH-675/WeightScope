@@ -76,3 +76,17 @@ def weighted_mean(values, weights):
     scaled = [weight / max(weights) for weight in weights]
     total = math.fsum(scaled)
     return math.fsum(value * (weight / total) for value, weight in zip(values, scaled))
+
+
+def mean_standard_error(values):
+    import math
+    import statistics
+
+    values = _values(values, minimum=2)
+    deviation = statistics.stdev(values)
+    return dict(
+        count=len(values),
+        mean=statistics.fmean(values),
+        sample_std=deviation,
+        standard_error=deviation / math.sqrt(len(values)),
+    )
