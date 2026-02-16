@@ -59,3 +59,14 @@ def test_standard_error_uses_sample_dispersion_and_sample_count():
     assert report["standard_error"] == pytest.approx(1)
     with pytest.raises(ValueError):
         mean_standard_error([1])
+
+
+def test_group_summaries_keep_conditions_and_id_types_separate():
+    from weightscope.analysis import group_summaries
+
+    rows = [{"seed": "a", "loss": 1}, {"seed": "b", "loss": 8}, {"seed": "a", "loss": 3}]
+    report = group_summaries(rows, "seed", "loss")
+    assert report[0]["group"] == "a" and report[0]["mean"] == 2
+    assert report[1]["count"] == 1
+    with pytest.raises(ValueError):
+        group_summaries([{"seed": None, "loss": 2}], "seed", "loss")

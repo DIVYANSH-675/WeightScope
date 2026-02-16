@@ -90,3 +90,27 @@ def mean_standard_error(values):
         sample_std=deviation,
         standard_error=deviation / math.sqrt(len(values)),
     )
+
+
+def _identity(value):
+    if type(value) is str and value.strip():
+        return ("str", value)
+    if type(value) in (int, float):
+        _finite_number(value)
+        return (type(value).__name__, value)
+    raise ValueError("Group and pair IDs must be nonempty strings or finite numbers")
+
+
+def group_summaries(records, group_key, metric_key):
+    groups = {}
+    for row in records:
+        if not isinstance(row, dict) or group_key not in row or metric_key not in row:
+            raise ValueError("Every record must contain the group and metric keys")
+        identity = _identity(row[group_key])
+        groups.setdefault(identity, []).append(_finite_number(row[metric_key]))
+    if not groups:
+        raise ValueError("At least one grouped observation is required")
+    return [
+        dict(group=identity[1], **distribution_summary(values))
+        for identity, values in groups.items()
+    ]
