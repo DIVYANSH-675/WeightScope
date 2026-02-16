@@ -114,3 +114,14 @@ def group_summaries(records, group_key, metric_key):
         dict(group=identity[1], **distribution_summary(values))
         for identity, values in groups.items()
     ]
+
+
+def metric_values(records, key):
+    if not isinstance(key, str) or not key:
+        raise ValueError("A nonempty metric key is required")
+    values = []
+    for row in records:
+        if not isinstance(row, dict) or key not in row:
+            raise ValueError("Every record must contain the selected metric: " + key)
+        values.append(_finite_number(row[key]))
+    return _values(values)

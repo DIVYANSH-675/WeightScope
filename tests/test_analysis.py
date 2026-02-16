@@ -70,3 +70,13 @@ def test_group_summaries_keep_conditions_and_id_types_separate():
     assert report[1]["count"] == 1
     with pytest.raises(ValueError):
         group_summaries([{"seed": None, "loss": 2}], "seed", "loss")
+
+
+def test_metric_selection_does_not_silently_drop_missing_observations():
+    from weightscope.analysis import metric_values
+
+    assert metric_values([{"loss": 1, "note": "a"}, {"loss": 2}], "loss") == [1.0, 2.0]
+    with pytest.raises(ValueError, match="selected metric"):
+        metric_values([{"loss": 1}, {"accuracy": 0.5}], "loss")
+    with pytest.raises(ValueError):
+        metric_values([{"loss": True}], "loss")
