@@ -80,3 +80,17 @@ def test_metric_selection_does_not_silently_drop_missing_observations():
         metric_values([{"loss": 1}, {"accuracy": 0.5}], "loss")
     with pytest.raises(ValueError):
         metric_values([{"loss": True}], "loss")
+
+
+def test_pair_alignment_handles_reordering_and_rejects_duplicate_seeds():
+    from weightscope.analysis import align_pairs
+
+    before = [{"seed": 1, "loss": 3}, {"seed": 2, "loss": 4}]
+    after = [{"seed": 2, "loss": 2}, {"seed": 1, "loss": 1}]
+    report = align_pairs(before, after, "seed", "loss")
+    assert report["ids"] == [1, 2] and report["after"] == [1, 2]
+    with pytest.raises(ValueError, match="Duplicate"):
+        align_pairs(before + before[:1], after, "seed", "loss")
+    with pytest.raises(ValueError, match="unmatched"):
+        align_pairs(before, after[:1], "seed", "loss")
+    assert align_pairs(before, after[:1], "seed", "loss", strict=False)["only_before"] == [1]

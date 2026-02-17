@@ -125,3 +125,35 @@ def metric_values(records, key):
             raise ValueError("Every record must contain the selected metric: " + key)
         values.append(_finite_number(row[key]))
     return _values(values)
+
+
+def align_pairs(before, after, id_key, metric_key, strict=True):
+    if type(strict) is not bool:
+        raise ValueError("strict must be a boolean")
+
+    def index(rows):
+        indexed = {}
+        for row in rows:
+            if not isinstance(row, dict) or id_key not in row or metric_key not in row:
+                raise ValueError("Paired records require ID and metric fields")
+            identity = _identity(row[id_key])
+            if identity in indexed:
+                raise ValueError("Duplicate pair ID; aggregate repeated observations first")
+            indexed[identity] = _finite_number(row[metric_key])
+        return indexed
+
+    left, right = index(before), index(after)
+    only_left = [key for key in left if key not in right]
+    only_right = [key for key in right if key not in left]
+    if strict and (only_left or only_right):
+        raise ValueError("Paired reports have unmatched observation IDs")
+    common = [key for key in left if key in right]
+    if not common:
+        raise ValueError("Paired reports have no common observation IDs")
+    return dict(
+        ids=[key[1] for key in common],
+        before=[left[key] for key in common],
+        after=[right[key] for key in common],
+        only_before=[key[1] for key in only_left],
+        only_after=[key[1] for key in only_right],
+    )
