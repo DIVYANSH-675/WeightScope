@@ -157,3 +157,14 @@ def align_pairs(before, after, id_key, metric_key, strict=True):
         only_before=[key[1] for key in only_left],
         only_after=[key[1] for key in only_right],
     )
+
+
+def paired_summary(before, after):
+    before, after = _paired(before, after)
+    differences = [new - old for old, new in zip(before, after)]
+    return dict(
+        delta=distribution_summary(differences),
+        positive=sum(value > 0 for value in differences),
+        negative=sum(value < 0 for value in differences),
+        unchanged=sum(value == 0 for value in differences),
+    )

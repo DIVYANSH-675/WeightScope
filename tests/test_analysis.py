@@ -94,3 +94,13 @@ def test_pair_alignment_handles_reordering_and_rejects_duplicate_seeds():
     with pytest.raises(ValueError, match="unmatched"):
         align_pairs(before, after[:1], "seed", "loss")
     assert align_pairs(before, after[:1], "seed", "loss", strict=False)["only_before"] == [1]
+
+
+def test_paired_summary_preserves_pairwise_changes():
+    from weightscope.analysis import paired_summary
+
+    report = paired_summary([3, 1, 2], [1, 4, 2])
+    assert report["delta"]["mean"] == pytest.approx(1 / 3)
+    assert (report["positive"], report["negative"], report["unchanged"]) == (1, 1, 1)
+    with pytest.raises(ValueError):
+        paired_summary([1], [1, 2])
