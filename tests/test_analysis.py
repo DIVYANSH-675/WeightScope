@@ -104,3 +104,11 @@ def test_paired_summary_preserves_pairwise_changes():
     assert (report["positive"], report["negative"], report["unchanged"]) == (1, 1, 1)
     with pytest.raises(ValueError):
         paired_summary([1], [1, 2])
+
+
+def test_paired_bootstrap_preserves_shared_variation():
+    from weightscope.analysis import paired_bootstrap
+
+    report = paired_bootstrap([1, 100, 1000], [3, 102, 1002], samples=30, seed=4)
+    assert report["lower"] == report["upper"] == report["mean"] == 2
+    assert report == paired_bootstrap([1, 100, 1000], [3, 102, 1002], samples=30, seed=4)

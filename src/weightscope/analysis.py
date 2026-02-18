@@ -168,3 +168,10 @@ def paired_summary(before, after):
         negative=sum(value < 0 for value in differences),
         unchanged=sum(value == 0 for value in differences),
     )
+
+
+def paired_bootstrap(before, after, samples=1000, confidence=0.95, seed=0):
+    from .artifacts import bootstrap_mean
+
+    before, after = _paired(before, after)
+    return bootstrap_mean([new - old for old, new in zip(before, after)], samples, confidence, seed)
