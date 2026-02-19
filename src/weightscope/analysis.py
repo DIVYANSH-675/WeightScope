@@ -203,3 +203,22 @@ def paired_permutation(before, after, samples=1000, seed=0):
         seed=seed,
         method="Monte Carlo paired sign flips, absolute-mean tail",
     )
+
+
+def adjust_pvalues(values, method="bh"):
+    """Benjamini-Hochberg or Benjamini-Yekutieli adjusted p-values, original order."""
+    import math
+
+    values = _values(values)
+    if any(not 0 <= value <= 1 for value in values) or method not in ("bh", "by"):
+        raise ValueError("Provide p-values in [0,1] and method bh or by")
+    n = len(values)
+    factor = math.fsum(1 / index for index in range(1, n + 1)) if method == "by" else 1.0
+    order = sorted(range(n), key=values.__getitem__)
+    result = [0.0] * n
+    ceiling = 1.0
+    for position in range(n - 1, -1, -1):
+        index = order[position]
+        ceiling = min(ceiling, values[index] * n * factor / (position + 1))
+        result[index] = ceiling
+    return result

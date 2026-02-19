@@ -123,3 +123,15 @@ def test_paired_permutation_is_seeded_symmetric_and_never_returns_zero():
     assert 1 / 101 <= result["pvalue"] <= 1
     assert result == paired_permutation([0] * 8, [1] * 8, samples=100, seed=3)
     assert paired_permutation([1, 2], [1, 2], samples=10)["pvalue"] == 1
+
+
+def test_pvalue_adjustment_preserves_order_and_handles_dependence_correction():
+    from weightscope.analysis import adjust_pvalues
+
+    assert adjust_pvalues([0.01, 0.04, 0.03]) == pytest.approx([0.03, 0.04, 0.04])
+    assert adjust_pvalues([0.01, 0.04, 0.03], "by") == pytest.approx(
+        [0.055, 0.073333333333, 0.073333333333]
+    )
+    assert adjust_pvalues([0, 1]) == [0, 1]
+    with pytest.raises(ValueError):
+        adjust_pvalues([1.1])
