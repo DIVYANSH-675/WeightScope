@@ -112,3 +112,14 @@ def test_paired_bootstrap_preserves_shared_variation():
     report = paired_bootstrap([1, 100, 1000], [3, 102, 1002], samples=30, seed=4)
     assert report["lower"] == report["upper"] == report["mean"] == 2
     assert report == paired_bootstrap([1, 100, 1000], [3, 102, 1002], samples=30, seed=4)
+
+
+def test_paired_permutation_is_seeded_symmetric_and_never_returns_zero():
+    from weightscope.analysis import paired_permutation
+
+    result = paired_permutation([0] * 8, [1] * 8, samples=100, seed=3)
+    reverse = paired_permutation([1] * 8, [0] * 8, samples=100, seed=3)
+    assert result["pvalue"] == reverse["pvalue"]
+    assert 1 / 101 <= result["pvalue"] <= 1
+    assert result == paired_permutation([0] * 8, [1] * 8, samples=100, seed=3)
+    assert paired_permutation([1, 2], [1, 2], samples=10)["pvalue"] == 1

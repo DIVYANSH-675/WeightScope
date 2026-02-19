@@ -175,3 +175,31 @@ def paired_bootstrap(before, after, samples=1000, confidence=0.95, seed=0):
 
     before, after = _paired(before, after)
     return bootstrap_mean([new - old for old, new in zip(before, after)], samples, confidence, seed)
+
+
+def paired_permutation(before, after, samples=1000, seed=0):
+    """Absolute-mean two-sided sign-flip test; assumes within-pair label exchangeability."""
+    import random
+    import statistics
+
+    before, after = _paired(before, after)
+    differences = _values([new - old for old, new in zip(before, after)])
+    if type(samples) is not int or not 1 <= samples <= 10000 or type(seed) is not int or seed < 0:
+        raise ValueError("Use 1..10000 permutations and a nonnegative integer seed")
+    signed = statistics.fmean(differences)
+    observed = abs(signed)
+    rng = random.Random(seed)
+    extreme = 0
+    tolerance = 1e-12 * max(1.0, observed)
+    for _ in range(samples):
+        statistic = abs(statistics.fmean(value * rng.choice((-1, 1)) for value in differences))
+        extreme += statistic >= observed - tolerance
+    return dict(
+        count=len(differences),
+        mean_delta=signed,
+        statistic=observed,
+        pvalue=(extreme + 1) / (samples + 1),
+        samples=samples,
+        seed=seed,
+        method="Monte Carlo paired sign flips, absolute-mean tail",
+    )
