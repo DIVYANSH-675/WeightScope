@@ -144,3 +144,11 @@ def test_pearson_handles_rescaling_constants_and_reversed_association():
     assert pearson_correlation([1, 2, 3], [3, 2, 1]) == pytest.approx(-1)
     assert pearson_correlation([1, 1], [2, 3]) is None
     assert pearson_correlation([1e300, 2e300, 3e300], [1, 2, 3]) == pytest.approx(1)
+
+
+def test_rank_association_is_invariant_to_monotone_rescaling():
+    from weightscope.analysis import rank_correlation
+
+    assert rank_correlation([1, 1, 3], [2, 2, 99]) == pytest.approx(1)
+    assert rank_correlation([1, 2, 3], [100, 10, 1]) == pytest.approx(-1)
+    assert rank_correlation([1, 1], [2, 3]) is None

@@ -244,3 +244,22 @@ def pearson_correlation(left, right):
         return None
     correlation = math.fsum(a * b for a, b in zip(left, right)) / norm
     return max(-1.0, min(1.0, correlation))
+
+
+def rank_correlation(left, right):
+    left, right = _paired(left, right, minimum=2)
+
+    def ranks(values):
+        order = sorted(range(len(values)), key=values.__getitem__)
+        result = [0.0] * len(values)
+        start = 0
+        while start < len(values):
+            end = start + 1
+            while end < len(values) and values[order[start]] == values[order[end]]:
+                end += 1
+            for index in order[start:end]:
+                result[index] = (start + end - 1) / 2
+            start = end
+        return result
+
+    return pearson_correlation(ranks(left), ranks(right))
