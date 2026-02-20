@@ -222,3 +222,25 @@ def adjust_pvalues(values, method="bh"):
         ceiling = min(ceiling, values[index] * n * factor / (position + 1))
         result[index] = ceiling
     return result
+
+
+def pearson_correlation(left, right):
+    import math
+    import statistics
+
+    left, right = _paired(left, right, minimum=2)
+
+    def centered(values):
+        scale = max(map(abs, values)) or 1.0
+        normalized = [value / scale for value in values]
+        mean = statistics.fmean(normalized)
+        return [value - mean for value in normalized]
+
+    left, right = centered(left), centered(right)
+    norm = math.sqrt(
+        math.fsum(value * value for value in left) * math.fsum(value * value for value in right)
+    )
+    if not norm:
+        return None
+    correlation = math.fsum(a * b for a, b in zip(left, right)) / norm
+    return max(-1.0, min(1.0, correlation))

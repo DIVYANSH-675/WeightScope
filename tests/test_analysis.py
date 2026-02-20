@@ -135,3 +135,12 @@ def test_pvalue_adjustment_preserves_order_and_handles_dependence_correction():
     assert adjust_pvalues([0, 1]) == [0, 1]
     with pytest.raises(ValueError):
         adjust_pvalues([1.1])
+
+
+def test_pearson_handles_rescaling_constants_and_reversed_association():
+    from weightscope.analysis import pearson_correlation
+
+    assert pearson_correlation([1, 2, 3], [10, 20, 30]) == pytest.approx(1)
+    assert pearson_correlation([1, 2, 3], [3, 2, 1]) == pytest.approx(-1)
+    assert pearson_correlation([1, 1], [2, 3]) is None
+    assert pearson_correlation([1e300, 2e300, 3e300], [1, 2, 3]) == pytest.approx(1)
