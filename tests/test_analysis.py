@@ -163,3 +163,13 @@ def test_trend_respects_nonuniform_step_coordinates():
     assert linear_trend([3, 3])["r_squared"] is None
     with pytest.raises(ValueError):
         linear_trend([1, 2], [1, 1])
+
+
+def test_rolling_means_use_only_past_observations():
+    from weightscope.analysis import rolling_mean
+
+    assert rolling_mean([1, 3, 5], 2) == [None, 2, 4]
+    assert rolling_mean([1, 3, 5], 2, min_periods=1) == [1, 2, 4]
+    assert rolling_mean([1, 3], 3) == [None, None]
+    with pytest.raises(ValueError):
+        rolling_mean([1], 0)

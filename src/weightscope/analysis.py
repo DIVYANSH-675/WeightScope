@@ -285,3 +285,21 @@ def linear_trend(values, steps=None):
         intercept=_finite_number(center_y - slope * center_x),
         r_squared=correlation**2 if correlation is not None else None,
     )
+
+
+def rolling_mean(values, window, min_periods=None):
+    import statistics
+    from collections import deque
+
+    values = _values(values)
+    if type(window) is not int or window < 1:
+        raise ValueError("window must be a positive integer")
+    min_periods = window if min_periods is None else min_periods
+    if type(min_periods) is not int or not 1 <= min_periods <= window:
+        raise ValueError("min_periods must be an integer in [1,window]")
+    recent = deque(maxlen=window)
+    result = []
+    for value in values:
+        recent.append(value)
+        result.append(statistics.fmean(recent) if len(recent) >= min_periods else None)
+    return result
