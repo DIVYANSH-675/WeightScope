@@ -152,3 +152,14 @@ def test_rank_association_is_invariant_to_monotone_rescaling():
     assert rank_correlation([1, 1, 3], [2, 2, 99]) == pytest.approx(1)
     assert rank_correlation([1, 2, 3], [100, 10, 1]) == pytest.approx(-1)
     assert rank_correlation([1, 1], [2, 3]) is None
+
+
+def test_trend_respects_nonuniform_step_coordinates():
+    from weightscope.analysis import linear_trend
+
+    report = linear_trend([2, 4, 6], [1, 3, 5])
+    assert report["slope"] == pytest.approx(1) and report["intercept"] == pytest.approx(1)
+    assert report["r_squared"] == pytest.approx(1)
+    assert linear_trend([3, 3])["r_squared"] is None
+    with pytest.raises(ValueError):
+        linear_trend([1, 2], [1, 1])

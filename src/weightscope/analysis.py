@@ -263,3 +263,25 @@ def rank_correlation(left, right):
         return result
 
     return pearson_correlation(ranks(left), ranks(right))
+
+
+def linear_trend(values, steps=None):
+    import math
+    import statistics
+
+    values = _values(values, minimum=2)
+    steps = list(range(len(values))) if steps is None else steps
+    steps, values = _paired(steps, values, minimum=2)
+    center_x, center_y = statistics.fmean(steps), statistics.fmean(values)
+    dx, dy = [step - center_x for step in steps], [value - center_y for value in values]
+    denominator = math.fsum(value * value for value in dx)
+    if not denominator:
+        raise ValueError("Trend estimation requires distinct step values")
+    slope = _finite_number(math.fsum(x * y for x, y in zip(dx, dy)) / denominator)
+    correlation = pearson_correlation(steps, values)
+    return dict(
+        count=len(values),
+        slope=slope,
+        intercept=_finite_number(center_y - slope * center_x),
+        r_squared=correlation**2 if correlation is not None else None,
+    )
