@@ -173,3 +173,12 @@ def test_rolling_means_use_only_past_observations():
     assert rolling_mean([1, 3], 3) == [None, None]
     with pytest.raises(ValueError):
         rolling_mean([1], 0)
+
+
+def test_exponential_smoothing_preserves_initialization_and_full_weight_limit():
+    from weightscope.analysis import exponential_mean
+
+    assert exponential_mean([2, 6, 10], 0.5) == [2, 4, 7]
+    assert exponential_mean([2, 6, 10], 1) == [2, 6, 10]
+    with pytest.raises(ValueError):
+        exponential_mean([1], 0)

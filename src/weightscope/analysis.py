@@ -303,3 +303,14 @@ def rolling_mean(values, window, min_periods=None):
         recent.append(value)
         result.append(statistics.fmean(recent) if len(recent) >= min_periods else None)
     return result
+
+
+def exponential_mean(values, alpha=0.3):
+    values = _values(values)
+    alpha = _finite_number(alpha)
+    if not 0 < alpha <= 1:
+        raise ValueError("alpha must be in (0,1]")
+    result = [values[0]]
+    for value in values[1:]:
+        result.append(alpha * value + (1 - alpha) * result[-1])
+    return result
