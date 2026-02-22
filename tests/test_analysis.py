@@ -182,3 +182,13 @@ def test_exponential_smoothing_preserves_initialization_and_full_weight_limit():
     assert exponential_mean([2, 6, 10], 1) == [2, 6, 10]
     with pytest.raises(ValueError):
         exponential_mean([1], 0)
+
+
+def test_threshold_crossings_are_observed_and_direction_aware():
+    from weightscope.analysis import first_threshold
+
+    assert first_threshold([4, 3, 2], 3) == 1
+    assert first_threshold([1, 2, 3], 2, "max") == 1
+    assert first_threshold([4, 3], 2) is None
+    with pytest.raises(ValueError):
+        first_threshold([1], 0, "invalid")

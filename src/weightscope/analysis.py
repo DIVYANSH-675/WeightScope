@@ -314,3 +314,19 @@ def exponential_mean(values, alpha=0.3):
     for value in values[1:]:
         result.append(alpha * value + (1 - alpha) * result[-1])
     return result
+
+
+def _mode(mode):
+    if mode not in ("min", "max"):
+        raise ValueError("Metric direction must be min or max")
+    return mode
+
+
+def first_threshold(values, threshold, mode="min"):
+    values = _values(values)
+    threshold = _finite_number(threshold)
+    _mode(mode)
+    for index, value in enumerate(values):
+        if (mode == "min" and value <= threshold) or (mode == "max" and value >= threshold):
+            return index
+    return None
