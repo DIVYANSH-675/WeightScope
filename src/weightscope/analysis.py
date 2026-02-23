@@ -330,3 +330,30 @@ def first_threshold(values, threshold, mode="min"):
         if (mode == "min" and value <= threshold) or (mode == "max" and value >= threshold):
             return index
     return None
+
+
+def early_stopping(values, patience=5, min_delta=0.0, mode="min"):
+    values = _values(values)
+    _mode(mode)
+    min_delta = _finite_number(min_delta)
+    if type(patience) is not int or patience < 1 or min_delta < 0:
+        raise ValueError("Use positive integer patience and nonnegative min_delta")
+    best_index, best, stalled = 0, values[0], 0
+    stop_index = None
+    for index, value in enumerate(values[1:], 1):
+        improvement = best - value if mode == "min" else value - best
+        if improvement > min_delta:
+            best_index, best, stalled = index, value, 0
+        else:
+            stalled += 1
+        if stalled >= patience:
+            stop_index = index
+            break
+    return dict(
+        best_index=best_index,
+        best_value=best,
+        stop_index=stop_index,
+        patience=patience,
+        min_delta=min_delta,
+        mode=mode,
+    )

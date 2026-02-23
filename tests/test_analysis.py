@@ -192,3 +192,13 @@ def test_threshold_crossings_are_observed_and_direction_aware():
     assert first_threshold([4, 3], 2) is None
     with pytest.raises(ValueError):
         first_threshold([1], 0, "invalid")
+
+
+def test_early_stopping_does_not_use_observations_after_its_stop_point():
+    from weightscope.analysis import early_stopping
+
+    report = early_stopping([3, 2, 2, 2, 1], patience=2)
+    assert report["stop_index"] == 3 and report["best_index"] == 1
+    assert early_stopping([1, 2, 3], patience=1, mode="max")["stop_index"] is None
+    with pytest.raises(ValueError):
+        early_stopping([1], patience=True)
