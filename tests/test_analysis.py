@@ -202,3 +202,18 @@ def test_early_stopping_does_not_use_observations_after_its_stop_point():
     assert early_stopping([1, 2, 3], patience=1, mode="max")["stop_index"] is None
     with pytest.raises(ValueError):
         early_stopping([1], patience=True)
+
+
+def test_pareto_front_preserves_ties_and_respects_mixed_objectives():
+    from weightscope.analysis import pareto_indices
+
+    rows = [
+        dict(reward=1, cost=2),
+        dict(reward=2, cost=1),
+        dict(reward=2, cost=2),
+        dict(reward=2, cost=1),
+    ]
+    assert pareto_indices(rows, {"reward": "max", "cost": "min"}) == [1, 3]
+    assert pareto_indices([], {"loss": "min"}) == []
+    with pytest.raises(ValueError):
+        pareto_indices([{"reward": 1}], {"loss": "min"})

@@ -357,3 +357,28 @@ def early_stopping(values, patience=5, min_delta=0.0, mode="min"):
         min_delta=min_delta,
         mode=mode,
     )
+
+
+def pareto_indices(records, directions):
+    """Return original indices on the Pareto frontier; preserve tied configurations."""
+    if not isinstance(directions, dict) or not directions:
+        raise ValueError("Provide a metric-to-direction mapping")
+    for direction in directions.values():
+        _mode(direction)
+    vectors = []
+    for row in records:
+        if not isinstance(row, dict) or any(key not in row for key in directions):
+            raise ValueError("Every configuration must contain every objective")
+        vector = []
+        for key, mode in directions.items():
+            value = _finite_number(row[key])
+            vector.append(value if mode == "min" else -value)
+        vectors.append(vector)
+    return [
+        index
+        for index, own in enumerate(vectors)
+        if not any(
+            all(a <= b for a, b in zip(other, own)) and any(a < b for a, b in zip(other, own))
+            for other in vectors
+        )
+    ]
