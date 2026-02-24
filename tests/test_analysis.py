@@ -217,3 +217,12 @@ def test_pareto_front_preserves_ties_and_respects_mixed_objectives():
     assert pareto_indices([], {"loss": "min"}) == []
     with pytest.raises(ValueError):
         pareto_indices([{"reward": 1}], {"loss": "min"})
+
+
+def test_minmax_transform_uses_reference_bounds_without_refitting_or_clipping():
+    from weightscope.analysis import fit_minmax, transform_minmax
+
+    state = fit_minmax([2, 4])
+    assert transform_minmax([1, 3, 6], state) == [-0.5, 0.5, 2.0]
+    assert state == {"minimum": 2.0, "maximum": 4.0}
+    assert transform_minmax([5], fit_minmax([2, 2])) == [0.0]

@@ -382,3 +382,20 @@ def pareto_indices(records, directions):
             for other in vectors
         )
     ]
+
+
+def fit_minmax(values):
+    values = _values(values)
+    return dict(minimum=min(values), maximum=max(values))
+
+
+def transform_minmax(values, state):
+    values = _values(values)
+    if not isinstance(state, dict) or "minimum" not in state or "maximum" not in state:
+        raise ValueError("A fitted min-max state is required")
+    lower, upper = _finite_number(state["minimum"]), _finite_number(state["maximum"])
+    if upper < lower:
+        raise ValueError("Fitted maximum cannot be smaller than minimum")
+    if upper == lower:
+        return [0.0] * len(values)
+    return [_finite_number((value - lower) / (upper - lower)) for value in values]
