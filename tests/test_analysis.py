@@ -226,3 +226,13 @@ def test_minmax_transform_uses_reference_bounds_without_refitting_or_clipping():
     assert transform_minmax([1, 3, 6], state) == [-0.5, 0.5, 2.0]
     assert state == {"minimum": 2.0, "maximum": 4.0}
     assert transform_minmax([5], fit_minmax([2, 2])) == [0.0]
+
+
+def test_standardization_preserves_reference_statistics_for_new_observations():
+    from weightscope.analysis import fit_standardizer, transform_standard
+
+    state = fit_standardizer([1, 3])
+    assert transform_standard([1, 3, 5], state) == [-1.0, 1.0, 3.0]
+    assert transform_standard([4], fit_standardizer([2, 2])) == [2.0]
+    with pytest.raises(ValueError):
+        transform_standard([1], {"mean": 0, "scale": 0})

@@ -399,3 +399,20 @@ def transform_minmax(values, state):
     if upper == lower:
         return [0.0] * len(values)
     return [_finite_number((value - lower) / (upper - lower)) for value in values]
+
+
+def fit_standardizer(values):
+    import statistics
+
+    values = _values(values)
+    return dict(mean=statistics.fmean(values), scale=statistics.pstdev(values) or 1.0)
+
+
+def transform_standard(values, state):
+    values = _values(values)
+    if not isinstance(state, dict) or "mean" not in state or "scale" not in state:
+        raise ValueError("A fitted standardizer state is required")
+    mean, scale = _finite_number(state["mean"]), _finite_number(state["scale"])
+    if scale <= 0:
+        raise ValueError("Standardizer scale must be positive")
+    return [_finite_number((value - mean) / scale) for value in values]
