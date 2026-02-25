@@ -416,3 +416,28 @@ def transform_standard(values, state):
     if scale <= 0:
         raise ValueError("Standardizer scale must be positive")
     return [_finite_number((value - mean) / scale) for value in values]
+
+
+def compare_objectives(before, after, directions, tolerance=0.0):
+    if not isinstance(directions, dict) or not directions:
+        raise ValueError("Provide a metric-to-direction mapping")
+    tolerance = _finite_number(tolerance)
+    if tolerance < 0:
+        raise ValueError("Comparison tolerance must be nonnegative")
+    result = {}
+    for key, mode in directions.items():
+        _mode(mode)
+        if key not in before or key not in after:
+            raise ValueError("Both reports must contain every objective")
+        old, new = _finite_number(before[key]), _finite_number(after[key])
+        delta = _finite_number(new - old)
+        improvement = -delta if mode == "min" else delta
+        outcome = (
+            "unchanged"
+            if abs(delta) <= tolerance
+            else "improved"
+            if improvement > 0
+            else "worsened"
+        )
+        result[key] = dict(before=old, after=new, delta=delta, direction=mode, outcome=outcome)
+    return result

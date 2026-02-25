@@ -236,3 +236,18 @@ def test_standardization_preserves_reference_statistics_for_new_observations():
     assert transform_standard([4], fit_standardizer([2, 2])) == [2.0]
     with pytest.raises(ValueError):
         transform_standard([1], {"mean": 0, "scale": 0})
+
+
+def test_objective_comparison_requires_explicit_meaning_and_handles_ties():
+    from weightscope.analysis import compare_objectives
+
+    report = compare_objectives(
+        {"reward": 1, "cost": 3}, {"reward": 2, "cost": 2}, {"reward": "max", "cost": "min"}
+    )
+    assert all(value["outcome"] == "improved" for value in report.values())
+    assert (
+        compare_objectives({"loss": 1}, {"loss": 1.01}, {"loss": "min"}, 0.1)["loss"]["outcome"]
+        == "unchanged"
+    )
+    with pytest.raises(ValueError):
+        compare_objectives({"loss": 1}, {}, {"loss": "min"})
