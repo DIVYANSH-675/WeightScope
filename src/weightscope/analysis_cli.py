@@ -7,6 +7,7 @@ from . import __version__
 from .analysis import (
     align_pairs,
     distribution_summary,
+    group_summaries,
     median_absolute_deviation,
     metric_values,
     paired_bootstrap,
@@ -28,7 +29,7 @@ def main():
     parser.add_argument(
         "--version", action="version", version="weightscope-analysis " + __version__
     )
-    parser.add_argument("command", choices=["distribution", "paired"])
+    parser.add_argument("command", choices=["distribution", "paired", "grouped"])
     parser.add_argument("--input")
     parser.add_argument("--key", required=True)
     parser.add_argument("--output", required=True)
@@ -40,6 +41,7 @@ def main():
     parser.add_argument("--samples", type=int, default=1000)
     parser.add_argument("--confidence", type=float, default=0.95)
     parser.add_argument("--seed", type=int, default=0)
+    parser.add_argument("--group-key")
     args = parser.parse_args()
     if args.command != "paired" and not args.input:
         parser.error(args.command + " requires --input")
@@ -75,6 +77,15 @@ def main():
                 permutation=paired_permutation(
                     pairs["before"], pairs["after"], args.samples, args.seed
                 ),
+            )
+        elif args.command == "grouped":
+            if not args.group_key:
+                parser.error("grouped requires --group-key")
+            report = dict(
+                source=source_info(args.input),
+                metric=args.key,
+                group_key=args.group_key,
+                groups=group_summaries(read_records(args.input), args.group_key, args.key),
             )
         write_json(args.output, report)
     except (ValueError, OSError) as error:

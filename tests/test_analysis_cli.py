@@ -60,3 +60,25 @@ def test_paired_command_aligns_runs_and_rejects_missing_partners(tmp_path):
         expected=2,
     )
     assert not invalid.exists()
+
+
+def test_grouped_command_keeps_experimental_conditions_separate(tmp_path):
+    source = tmp_path / "metrics.jsonl"
+    source.write_text(
+        '{"condition":"clean","loss":1}\n{"condition":"noisy","loss":3}\n{"condition":"clean","loss":2}\n'
+    )
+    output = tmp_path / "groups.json"
+    run_cli(
+        "grouped",
+        "--input",
+        source,
+        "--key",
+        "loss",
+        "--group-key",
+        "condition",
+        "--output",
+        output,
+    )
+    groups = json.loads(output.read_text())["groups"]
+    assert groups[0]["group"] == "clean" and groups[0]["mean"] == 1.5
+    assert groups[1]["group"] == "noisy" and groups[1]["count"] == 1
