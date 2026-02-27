@@ -111,3 +111,8 @@ Bootstrap intervals assume independent observations. Correlated training steps o
 Use `--learning-rate` and `--weight-decay` for controlled regressor experiments. Defaults remain 0.002 and 0.01. Keep group splits and the training bank fixed when comparing these settings, and reserve final evaluation data for the final model.
 
 Evaluation includes MAE, RMSE, signed bias (prediction minus target), and Spearman rank correlation using average tied ranks. Spearman is null when either ranking is constant. The `predictions` array records each checkpoint index, run ID, prediction, target, and signed error so failures can be inspected without reconstructing row order. These diagnostics do not change the original release's underperforming benchmark results.
+
+
+## Experiment analysis
+
+`weightscope-analysis` (or `python -m weightscope.analysis_cli`) provides distribution reports, matched-run comparisons, grouped summaries, and training-curve diagnostics. Reports include input-file SHA-256 fingerprints. See [ANALYSIS.md](ANALYSIS.md) for runnable examples, the Python API, statistical assumptions, and interpretation limits. These tools analyze saved observations; they do not constitute new model benchmark results.

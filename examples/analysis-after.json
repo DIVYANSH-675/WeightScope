@@ -1,0 +1,6 @@
+[
+  {"seed":3,"condition":"noisy","score":0.45},
+  {"seed":1,"condition":"clean","score":0.65},
+  {"seed":4,"condition":"noisy","score":0.55},
+  {"seed":2,"condition":"clean","score":0.75}
+]
