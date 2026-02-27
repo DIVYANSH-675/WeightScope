@@ -82,3 +82,40 @@ def test_grouped_command_keeps_experimental_conditions_separate(tmp_path):
     groups = json.loads(output.read_text())["groups"]
     assert groups[0]["group"] == "clean" and groups[0]["mean"] == 1.5
     assert groups[1]["group"] == "noisy" and groups[1]["count"] == 1
+
+
+def test_curve_command_orders_steps_and_exposes_causal_diagnostics(tmp_path):
+    source = tmp_path / "curve.json"
+    source.write_text('[{"step":2,"loss":1},{"step":0,"loss":3},{"step":1,"loss":2}]')
+    output = tmp_path / "diagnostics.json"
+    run_cli(
+        "curve",
+        "--input",
+        source,
+        "--key",
+        "loss",
+        "--step-key",
+        "step",
+        "--window",
+        "2",
+        "--threshold",
+        "2",
+        "--output",
+        output,
+    )
+    curve = json.loads(output.read_text())["curve"]
+    assert curve["steps"] == [0, 1, 2] and curve["rolling"] == [None, 2.5, 1.5]
+    assert curve["threshold_step"] == 1 and curve["trend"]["slope"] == -1
+    source.write_text('[{"step":0,"loss":1},{"step":0,"loss":2}]')
+    run_cli(
+        "curve",
+        "--input",
+        source,
+        "--key",
+        "loss",
+        "--step-key",
+        "step",
+        "--output",
+        tmp_path / "invalid.json",
+        expected=2,
+    )

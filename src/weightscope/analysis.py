@@ -441,3 +441,39 @@ def compare_objectives(before, after, directions, tolerance=0.0):
         )
         result[key] = dict(before=old, after=new, delta=delta, direction=mode, outcome=outcome)
     return result
+
+
+def curve_summary(
+    records,
+    metric_key,
+    step_key=None,
+    window=3,
+    alpha=0.3,
+    threshold=None,
+    mode="min",
+    patience=5,
+    min_delta=0.0,
+):
+    rows = list(records)
+    values = metric_values(rows, metric_key)
+    steps = metric_values(rows, step_key) if step_key is not None else list(range(len(values)))
+    ordered = sorted(zip(steps, values))
+    steps, values = map(list, zip(*ordered))
+    if any(left >= right for left, right in zip(steps, steps[1:])):
+        raise ValueError("Curve steps must be distinct; aggregate repeated runs first")
+    _mode(mode)
+    crossing = first_threshold(values, threshold, mode) if threshold is not None else None
+    stopping = early_stopping(values, patience, min_delta, mode)
+    stopping["best_step"] = steps[stopping["best_index"]]
+    stopping["stop_step"] = (
+        steps[stopping["stop_index"]] if stopping["stop_index"] is not None else None
+    )
+    return dict(
+        steps=steps,
+        values=values,
+        rolling=rolling_mean(values, window),
+        ema=exponential_mean(values, alpha),
+        trend=linear_trend(values, steps) if len(values) > 1 else None,
+        threshold_step=steps[crossing] if crossing is not None else None,
+        early_stopping=stopping,
+    )

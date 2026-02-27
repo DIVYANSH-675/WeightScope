@@ -6,6 +6,7 @@ import json
 from . import __version__
 from .analysis import (
     align_pairs,
+    curve_summary,
     distribution_summary,
     group_summaries,
     median_absolute_deviation,
@@ -29,7 +30,7 @@ def main():
     parser.add_argument(
         "--version", action="version", version="weightscope-analysis " + __version__
     )
-    parser.add_argument("command", choices=["distribution", "paired", "grouped"])
+    parser.add_argument("command", choices=["distribution", "paired", "grouped", "curve"])
     parser.add_argument("--input")
     parser.add_argument("--key", required=True)
     parser.add_argument("--output", required=True)
@@ -42,6 +43,13 @@ def main():
     parser.add_argument("--confidence", type=float, default=0.95)
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--group-key")
+    parser.add_argument("--step-key")
+    parser.add_argument("--window", type=int, default=3)
+    parser.add_argument("--alpha", type=float, default=0.3)
+    parser.add_argument("--threshold", type=float)
+    parser.add_argument("--mode", choices=["min", "max"], default="min")
+    parser.add_argument("--patience", type=int, default=5)
+    parser.add_argument("--min-delta", type=float, default=0.0)
     args = parser.parse_args()
     if args.command != "paired" and not args.input:
         parser.error(args.command + " requires --input")
@@ -86,6 +94,22 @@ def main():
                 metric=args.key,
                 group_key=args.group_key,
                 groups=group_summaries(read_records(args.input), args.group_key, args.key),
+            )
+        elif args.command == "curve":
+            report = dict(
+                source=source_info(args.input),
+                metric=args.key,
+                curve=curve_summary(
+                    read_records(args.input),
+                    args.key,
+                    args.step_key,
+                    args.window,
+                    args.alpha,
+                    args.threshold,
+                    args.mode,
+                    args.patience,
+                    args.min_delta,
+                ),
             )
         write_json(args.output, report)
     except (ValueError, OSError) as error:
