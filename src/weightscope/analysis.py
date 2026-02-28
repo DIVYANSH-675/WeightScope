@@ -71,9 +71,10 @@ def weighted_mean(values, weights):
     import math
 
     values, weights = _paired(values, weights)
-    if any(weight < 0 for weight in weights) or not max(weights):
+    peak = max(weights)
+    if any(weight < 0 for weight in weights) or not peak:
         raise ValueError("Weights must be nonnegative with a positive total")
-    scaled = [weight / max(weights) for weight in weights]
+    scaled = [weight / peak for weight in weights]
     total = math.fsum(scaled)
     return math.fsum(value * (weight / total) for value, weight in zip(values, scaled))
 
@@ -190,7 +191,7 @@ def paired_permutation(before, after, samples=1000, seed=0):
     observed = abs(signed)
     rng = random.Random(seed)
     extreme = 0
-    tolerance = 1e-12 * max(1.0, observed)
+    tolerance = 1e-12 * observed
     for _ in range(samples):
         statistic = abs(statistics.fmean(value * rng.choice((-1, 1)) for value in differences))
         extreme += statistic >= observed - tolerance
@@ -268,21 +269,41 @@ def rank_correlation(left, right):
 def linear_trend(values, steps=None):
     import math
     import statistics
+    from decimal import Decimal, localcontext
 
     values = _values(values, minimum=2)
     steps = list(range(len(values))) if steps is None else steps
     steps, values = _paired(steps, values, minimum=2)
-    center_x, center_y = statistics.fmean(steps), statistics.fmean(values)
-    dx, dy = [step - center_x for step in steps], [value - center_y for value in values]
+    scale_x, scale_y = max(map(abs, steps)) or 1.0, max(map(abs, values)) or 1.0
+    normalized_x, normalized_y = (
+        [step / scale_x for step in steps],
+        [value / scale_y for value in values],
+    )
+    center_x, center_y = statistics.fmean(normalized_x), statistics.fmean(normalized_y)
+    dx, dy = (
+        [step - center_x for step in normalized_x],
+        [value - center_y for value in normalized_y],
+    )
     denominator = math.fsum(value * value for value in dx)
     if not denominator:
         raise ValueError("Trend estimation requires distinct step values")
-    slope = _finite_number(math.fsum(x * y for x, y in zip(dx, dy)) / denominator)
+    normalized_slope = math.fsum(x * y for x, y in zip(dx, dy)) / denominator
+    # Avoid overflow in an intermediate unit conversion when the final slope is finite.
+    with localcontext() as context:
+        context.prec = 50
+        slope = _finite_number(
+            float(
+                Decimal.from_float(normalized_slope)
+                * Decimal.from_float(scale_y)
+                / Decimal.from_float(scale_x)
+            )
+        )
+    intercept = _finite_number((center_y - normalized_slope * center_x) * scale_y)
     correlation = pearson_correlation(steps, values)
     return dict(
         count=len(values),
         slope=slope,
-        intercept=_finite_number(center_y - slope * center_x),
+        intercept=intercept,
         r_squared=correlation**2 if correlation is not None else None,
     )
 
@@ -398,7 +419,12 @@ def transform_minmax(values, state):
         raise ValueError("Fitted maximum cannot be smaller than minimum")
     if upper == lower:
         return [0.0] * len(values)
-    return [_finite_number((value - lower) / (upper - lower)) for value in values]
+    magnitude = max(abs(lower), abs(upper)) or 1.0
+    low_scaled, high_scaled = lower / magnitude, upper / magnitude
+    return [
+        _finite_number((value / magnitude - low_scaled) / (high_scaled - low_scaled))
+        for value in values
+    ]
 
 
 def fit_standardizer(values):
@@ -415,7 +441,16 @@ def transform_standard(values, state):
     mean, scale = _finite_number(state["mean"]), _finite_number(state["scale"])
     if scale <= 0:
         raise ValueError("Standardizer scale must be positive")
-    return [_finite_number((value - mean) / scale) for value in values]
+    import math
+
+    result = []
+    for value in values:
+        difference = value - mean
+        normalized = (
+            difference / scale if math.isfinite(difference) else value / scale - mean / scale
+        )
+        result.append(_finite_number(normalized))
+    return result
 
 
 def compare_objectives(before, after, directions, tolerance=0.0):

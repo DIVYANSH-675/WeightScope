@@ -251,3 +251,31 @@ def test_objective_comparison_requires_explicit_meaning_and_handles_ties():
     )
     with pytest.raises(ValueError):
         compare_objectives({"loss": 1}, {}, {"loss": "min"})
+
+
+def test_permutation_pvalue_is_invariant_to_small_positive_unit_changes():
+    from weightscope.analysis import paired_permutation
+
+    ordinary = paired_permutation([0] * 8, [1] * 8, samples=100, seed=3)
+    tiny = paired_permutation([0] * 8, [1e-15] * 8, samples=100, seed=3)
+    assert ordinary["pvalue"] == tiny["pvalue"] < 1
+
+
+def test_trend_avoids_overflow_for_large_but_finite_measurement_units():
+    from weightscope.analysis import linear_trend
+
+    result = linear_trend([2e300, 4e300, 6e300], [1e300, 2e300, 3e300])
+    assert result["slope"] == pytest.approx(2)
+    assert result["intercept"] == 0
+
+
+def test_minmax_scaling_handles_extreme_reference_bounds():
+    from weightscope.analysis import fit_minmax, transform_minmax
+
+    assert transform_minmax([-1e308, 0, 1e308], fit_minmax([-1e308, 1e308])) == [0, 0.5, 1]
+
+
+def test_standardization_avoids_intermediate_subtraction_overflow():
+    from weightscope.analysis import transform_standard
+
+    assert transform_standard([1e308], {"mean": -1e308, "scale": 1e308}) == [2.0]
